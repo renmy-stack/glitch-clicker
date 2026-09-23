@@ -486,7 +486,8 @@ function offline() {
 // ================= 描画 =================
 function renderHud() {
   $('gold').textContent = fmt(S.gold) + ' G';
-  if (expanded) $('mini-hud').textContent = 'エリア ' + S.area + '  ' + fmt(S.gold) + ' G' + (E ? '  HP ' + Math.max(0, Math.round(E.hp / E.max * 100)) + '%' : '');
+  $('hud-dps').textContent = 'DPS ' + fmt(dps()); $('hud-tap').textContent = 'タップ ' + fmt(tapDmg());
+  if (expanded) $('mini-hud').textContent = 'エリア ' + S.area + ' ' + fmt(S.gold) + 'G ⚔' + fmt(dps()) + ' 👆' + fmt(tapDmg());
   $('area-name').textContent = zoneOf().name + (S.loop > 1 ? ' ' + S.loop + '周' : '');
   $('area-no').textContent = 'エリア ' + S.area;
   $('progfill').style.width = (isBossArea() ? (E ? (1 - E.hp / E.max) * 100 : 0) : S.kills / KILLS_PER_AREA * 100) + '%';

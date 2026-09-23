@@ -29,9 +29,11 @@ h4 { margin: 12px 0 6px; font-size: 15px; color: var(--accent); border-bottom: 1
 
 #screen { font-family: var(--pixel); position: relative; width: 100%; aspect-ratio: 4 / 3; background: #0d1a0d; border: 6px solid #1b1826; border-radius: 8px; overflow: hidden; touch-action: none; image-rendering: pixelated; }
 #bg { position: absolute; inset: 0; background-size: cover; background-position: center; transition: opacity .3s; }
-#hud { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 6px; padding: 5px 8px; font-size: 14px; background: linear-gradient(rgba(0,0,0,.65), transparent); pointer-events: none; text-shadow: 1px 1px 0 #000; }
+#hud { position: absolute; top: 0; left: 0; right: 0; display: flex; flex-wrap: wrap; gap: 0 6px; padding: 5px 8px; font-size: 14px; background: linear-gradient(rgba(0,0,0,.65), transparent); pointer-events: none; text-shadow: 1px 1px 0 #000; }
 #area-name { flex: 1; }
 #gold { color: var(--accent); font-weight: bold; margin-left: 10px; }
+#hud2 { width: 100%; display: flex; gap: 12px; font-size: 13px; color: #cfe8ff; margin-top: 1px; }
+#hud-dps::before { content: '⚔ '; } #hud-tap::before { content: '👆 '; }
 #battle { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
 #enemy-wrap { display: flex; flex-direction: column; align-items: center; margin-top: 18px; }
 #enemy-name { font-size: 15px; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000; margin-bottom: 2px; }
