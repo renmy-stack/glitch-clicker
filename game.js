@@ -13,6 +13,7 @@ function newState() {
     bugs: {}, cheats: {}, cheatOn: {}, ach: {}, cool: {}, wallAreas: {},
     loop: 1, loopStart: Date.now(), cheated: false, name: '', mute: false, palette: 0,
     debugUnlocked: false, lastSave: Date.now(),
+    mile: {}, buff: 1, skillCd: {}, skillUntil: {}, luck: 0, zoneSeen: {},
     stats: { kills: 0, taps: 0, goldTotal: 0, bestArea: 1, endingsClean: 0, endingsCheat: 0, fastestClear: 0, area1Kills: 0, bugsFound: 0, playSec: 0 },
   };
 }
@@ -35,9 +36,13 @@ function fmt(n) {
 function trim(x) { return x >= 100 ? Math.floor(x) : x.toFixed(1).replace(/\.0$/, ''); }
 function loopMul() { return Math.pow(LOOP_MUL, S.loop - 1); }
 function speedMul() { let m = 1; for (const c of CHEATS) if (c.speed && S.cheatOn[c.id]) m = Math.max(m, c.speed); return m; }
-function baseDps() { let d = 0; for (const a of ALLIES) d += (S.allies[a.id] || 0) * a.dps; return d * loopMul(); }
+function allyDps(a) { return a.dps * Math.pow(2, S.mile[a.id] || 0) * loopMul() * S.buff; }
+function baseDps() { let d = 0; for (const a of ALLIES) d += (S.allies[a.id] || 0) * allyDps(a); return d; }
 function dps() { return baseDps() * speedMul(); }
-function tapDmg() { return (1 + S.sword * SWORD.dmgPerLv) * loopMul() + baseDps() * TAP_DPS_RATE; }
+function tapDmg() { return ((1 + S.sword * SWORD.dmgPerLv) * loopMul() + baseDps() * TAP_DPS_RATE) * (skillActive('crit') ? 10 : 1); }
+function skillActive(id) { return (S.skillUntil[id] || 0) > Date.now(); }
+function mileCost(a) { return Math.floor(a.cost * Math.pow(COST_GROWTH, S.allies[a.id] || 0)) * MILE_COST_MUL; }
+function mileNext(a) { return MILESTONES[S.mile[a.id] || 0]; }
 function allyCost(a, n = 1) { const have = S.allies[a.id] || 0; let c = 0; for (let i = 0; i < n; i++) c += Math.floor(a.cost * Math.pow(COST_GROWTH, have + i)); return c; }
 function maxAffordable(a) { let n = 0, have = S.allies[a.id] || 0, g = S.gold; while (n < 1000) { const c = Math.floor(a.cost * Math.pow(COST_GROWTH, have + n)); if (c > g) break; g -= c; n++; } return n; }
 function swordCost() { return Math.floor(SWORD.cost * Math.pow(SWORD.growth, S.sword)); }
@@ -52,14 +57,17 @@ let E = null; // { id, hp, max, boss }
 function spawn() {
   const z = zoneOf();
   const boss = isBossArea();
-  const id = boss ? z.boss : z.enemies[S.kills % z.enemies.length];
-  E = { id, boss, max: curHp(boss), hp: curHp(boss) };
+  let id = boss ? z.boss : z.enemies[S.kills % z.enemies.length];
+  let rare = null;
+  if (!boss && !ffRunning) { const r = Math.random(); let acc = 0; for (const x of RARES) { acc += x.chance; if (r < acc) { rare = x; break; } } }
+  const hp = Math.max(1, Math.floor(curHp(boss) * (rare ? rare.hpMul : 1)));
+  E = { id: rare ? rare.id : id, boss, rare, max: hp, hp };
   if (ffRunning) return;
   const img = $('enemy');
   img.classList.remove('dead');
-  img.className = boss ? 'boss' : '';
-  img.src = 'assets/enemy/' + id + '.png';
-  $('enemy-name').textContent = ENEMIES[id].name + (boss ? ' (BOSS)' : '');
+  img.className = boss ? 'boss' : (rare ? 'rare-' + rare.id : '');
+  img.src = 'assets/enemy/' + E.id + '.png';
+  $('enemy-name').textContent = rare ? rare.name : ENEMIES[id].name + (boss ? ' (BOSS)' : '');
   $('bg').style.backgroundImage = 'url(assets/bg/' + z.id + '.jpg)';
   renderHud();
 }
@@ -71,21 +79,73 @@ function damage(d, crit, tap) {
   if (!ffRunning) renderHp();
 }
 function kill() {
-  const g = enemyGold(S.area, E.boss);
+  let g = enemyGold(S.area, E.boss);
+  if (E.rare) g *= E.rare.goldMul;
+  if (skillActive('rush')) g *= 3;
+  if (S.luck > 0) { S.luck--; g *= 2; }
+  g = Math.floor(g);
   addGold(g);
+  if (E.rare && E.rare.frag && !ffRunning) { S.frags += E.rare.frag; showNotice('バグった てきを たおした！<br><span class="frag">メモリ片 +' + E.rare.frag + '</span>'); glitchFx(); }
   S.stats.kills++;
   if (S.area === 1 && S.loop >= 2) { S.stats.area1Kills++; if (S.stats.area1Kills >= 100) discover('back100'); }
   if (!ffRunning) { floatText('+' + fmt(g) + 'G', 'gold'); $('enemy').classList.add('dead'); sfx(E.boss ? 'boss' : 'kill'); }
   const wasBoss = E.boss;
   if (wasBoss) {
     if (S.area === LAST_AREA) { ending(); }
-    else { S.area++; S.kills = 0; S.stats.bestArea = Math.max(S.stats.bestArea, S.area); }
+    else { S.area++; S.kills = 0; S.stats.bestArea = Math.max(S.stats.bestArea, S.area); if (!ffRunning) setTimeout(bossReward, 500); }
   } else {
     S.kills++;
     if (S.kills >= KILLS_PER_AREA) { S.area++; S.kills = 0; S.stats.bestArea = Math.max(S.stats.bestArea, S.area); }
   }
   E.hp = 0;
   if (ffRunning) spawn(); else setTimeout(spawn, wasBoss ? 400 : 180);
+  if (!ffRunning) zoneIntro();
+}
+function zoneIntro() {
+  const z = zoneOf();
+  if (S.zoneSeen[z.id]) return;
+  S.zoneSeen[z.id] = 1;
+  setTimeout(() => showNotice('<b>' + z.name + '</b><br>' + ZONE_INTRO[z.id]), 700);
+}
+// ボス撃破のごほうび（3択）
+function bossReward() {
+  const pool = BOSS_REWARDS.slice().sort(() => Math.random() - 0.5).slice(0, 3);
+  let html = '<div class="note">ボスを たおした！ ごほうびを ひとつ えらぶ</div>';
+  pool.forEach(r => { html += '<button class="reward" onclick="takeReward(\'' + r.id + '\')"><b>' + r.name + '</b><br><small>' + r.desc + '</small></button>'; });
+  modal('ごほうび', html, []);
+  sfx('ach');
+}
+function takeReward(id) {
+  closeModal();
+  if (id === 'gold') { const g = Math.max(50, Math.floor(goldPerSec() * 600)); addGold(g); toast('+' + fmt(g) + 'G'); }
+  if (id === 'sword') { S.sword += 5; toast('けん +5'); }
+  if (id === 'frag') { S.frags += 3; toast('<span class="frag">メモリ片 +3</span>'); }
+  if (id === 'buff') { S.buff = Math.round((S.buff + 0.2) * 100) / 100; toast('仲間の DPS +20%（いま ×' + S.buff.toFixed(1) + '）'); }
+  if (id === 'cdreset') { S.skillCd = {}; toast('スキルの クールタイムが もどった'); }
+  if (id === 'luck') { S.luck += 30; toast('つぎの 30たい ゴールド ×2'); }
+  renderAll(); save();
+}
+// スキル
+function skillUnlocked(sk) { return S.stats.bestArea >= sk.unlockArea; }
+function useSkill(id) {
+  const sk = SKILLS.find(s => s.id === id); const now = Date.now();
+  if (!skillUnlocked(sk) || titleShown || screenOff) return;
+  if ((S.skillCd[id] || 0) > now) return;
+  S.skillCd[id] = now + sk.cd * 1000;
+  if (sk.dur) S.skillUntil[id] = now + sk.dur * 1000;
+  if (id === 'allout') { const d = Math.floor(dps() * 60); if (d > 0) { damage(d, true, false); floatText(fmt(d), 'crit'); } else toast('仲間が いない'); }
+  if (id === 'crit') showNotice('💥 かいしんの いちげき！<br>15びょう タップ ×10');
+  if (id === 'rush') showNotice('💰 ゴールドラッシュ！<br>30びょう ゴールド ×3');
+  sfx('ach'); renderSkills(); save();
+}
+function renderSkills() {
+  const bar = $('skills'); const now = Date.now();
+  const html = SKILLS.map(sk => {
+    const un = skillUnlocked(sk); const cd = Math.max(0, ((S.skillCd[sk.id] || 0) - now) / 1000); const act = skillActive(sk.id);
+    const label = !un ? 'エリア' + sk.unlockArea : cd > 0 ? Math.ceil(cd) + 's' : 'OK';
+    return '<button class="skill' + (un ? '' : ' locked') + (act ? ' active' : '') + (cd > 0 ? ' cd' : '') + '" onclick="useSkill(\'' + sk.id + '\')" title="' + sk.desc + '">' + sk.icon + ' ' + sk.short + '<small>' + label + '</small></button>';
+  }).join('');
+  if (bar.innerHTML !== html) bar.innerHTML = html;
 }
 let ffRunning = false;
 function addGold(g) {
@@ -127,7 +187,7 @@ $('screen').addEventListener('pointerdown', (ev) => {
 });
 ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => $('screen').addEventListener(t, () => clearTimeout(holdTimer)));
 
-function startGame() { titleShown = false; $('title').hidden = true; titleTaps = 0; $('title-logo').style.transform = ''; audioInit(); }
+function startGame() { titleShown = false; $('title').hidden = true; titleTaps = 0; $('title-logo').style.transform = ''; audioInit(); zoneIntro(); renderSkills(); }
 function showTitle() { titleShown = true; $('title').hidden = false; }
 
 // ゲーム機のボタン
@@ -204,7 +264,7 @@ function secondChecks() {
 
 // ================= チート =================
 function cheatDef(id) { return CHEATS.find(c => c.id === id); }
-function cheatAvailable(c) { return S.debugUnlocked && (!c.needBugs || bugCount() >= c.needBugs); }
+function cheatAvailable(c) { return (S.debugUnlocked || HARMLESS_CHEATS.includes(c.id)) && (!c.needBugs || bugCount() >= c.needBugs); }
 function buyCheat(id) {
   const c = cheatDef(id);
   if (S.cheats[id] || !cheatAvailable(c) || S.frags < c.cost) return;
@@ -266,6 +326,7 @@ function ending() {
 }
 function prestige() {
   S.loop++; S.gold = 0; S.allies = {}; S.sword = 0; S.area = 1; S.kills = 0; S.wallAreas = {}; S.cheated = false; S.loopStart = Date.now(); S.stats.area1Kills = 0;
+  S.mile = {}; S.buff = 1; S.skillCd = {}; S.skillUntil = {}; S.luck = 0; S.zoneSeen = {};
   glitchFx(); closeModal(); showTitle(); spawn(); renderAll(); save();
   toast(S.loop + '周目 スタート！ ダメージ ×' + loopMul());
   checkAchievements();
@@ -286,7 +347,7 @@ setInterval(() => {
   const now = performance.now(); const dt = Math.min(1, (now - last) / 1000); last = now;
   tick(dt);
 }, 100);
-setInterval(() => { secondChecks(); renderHud(); }, 1000);
+setInterval(() => { secondChecks(); renderHud(); renderSkills(); }, 1000);
 setInterval(save, 10000);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(); else last = performance.now(); });
 window.addEventListener('pagehide', save);
@@ -310,7 +371,7 @@ function renderHud() {
   $('area-no').textContent = 'エリア ' + S.area;
   $('progfill').style.width = (isBossArea() ? (E ? (1 - E.hp / E.max) * 100 : 0) : S.kills / KILLS_PER_AREA * 100) + '%';
   renderHp();
-  const p = $('panel-gold'); if (p) p.innerHTML = fmt(S.gold) + ' G  <span class="frag">◆' + S.frags + '</span>  <small>DPS ' + fmt(dps()) + ' / タップ ' + fmt(tapDmg()) + '</small>';
+  const p = $('panel-gold'); if (p) p.innerHTML = fmt(S.gold) + ' G  <span class="frag">◆' + S.frags + '</span>  <small>DPS ' + fmt(dps()) + ' / タップ ' + fmt(tapDmg()) + (S.buff > 1 ? ' / はた ×' + S.buff.toFixed(1) : '') + (S.luck ? ' / めがね ' + S.luck : '') + '</small>';
   document.querySelectorAll('.row button.buy').forEach(b => { const c = Number(b.dataset.cost); if (!isNaN(c)) b.disabled = S.gold < c; });
 }
 function renderHp() { if (!E) return; $('hpfill').style.width = Math.max(0, E.hp / E.max * 100) + '%'; $('hptext').textContent = fmt(Math.max(0, E.hp)) + ' / ' + fmt(E.max); }
@@ -357,6 +418,18 @@ function renderPanel() {
     }
   } else if (curTab === 'upgrade') {
     h += '<h4>そうび</h4><div class="row"><div class="ico">🗡️</div><div class="info"><div class="name">けん Lv.' + S.sword + '</div><div class="sub">タップ1回 ' + fmt(tapDmg()) + ' ダメージ（+' + (SWORD.dmgPerLv * loopMul()).toFixed(1) + '）</div></div><button class="buy" data-cost="' + swordCost() + '" onclick="buySword()">きたえる<br>' + fmt(swordCost()) + 'G</button></div>';
+    h += '<h4>なかまの きわめ</h4><div class="note">人数が ふしめ（' + MILESTONES.join('・') + '）に とどくと、その仲間の DPS を 2倍にできる。</div>';
+    let anyMile = false;
+    for (const a of ALLIES) {
+      const have = S.allies[a.id] || 0, lv = S.mile[a.id] || 0, need = mileNext(a);
+      if (!have) continue; anyMile = true;
+      if (!need) { h += '<div class="row found"><img src="assets/ally/' + a.id + '.png" alt=""><div class="info"><div class="name">' + a.name + ' <span class="badge">×' + Math.pow(2, lv) + '</span></div><div class="sub">きわめ きった</div></div></div>'; continue; }
+      const ok = have >= need, c = mileCost(a);
+      h += '<div class="row' + (ok ? '' : ' locked') + '"><img src="assets/ally/' + a.id + '.png" alt=""><div class="info"><div class="name">' + a.name + ' <span class="badge">×' + Math.pow(2, lv) + '</span></div><div class="sub">' + (ok ? 'DPS を 2倍に' : have + ' / ' + need + '人で 解放') + '</div></div>' + (ok ? '<button class="buy" data-cost="' + c + '" onclick="buyMile(\'' + a.id + '\')">×2<br>' + fmt(c) + 'G</button>' : '') + '</div>';
+    }
+    if (!anyMile) h += '<div class="note">まず 仲間を やとおう</div>';
+    h += '<h4>スキル</h4>';
+    for (const sk of SKILLS) h += '<div class="row' + (skillUnlocked(sk) ? '' : ' locked') + '"><div class="ico">' + sk.icon + '</div><div class="info"><div class="name">' + sk.name + '</div><div class="sub">' + sk.desc + '（クールタイム ' + Math.round(sk.cd / 60) + '分）' + (skillUnlocked(sk) ? '' : '<br>エリア ' + sk.unlockArea + ' で 解放') + '</div></div></div>';
     h += '<h4>しゅうかい</h4><div class="note">いま ' + S.loop + '周目（全ダメージ ×' + loopMul().toFixed(1) + '）。魔王を たおすと「カセットを さしなおす」が できる。' + (S.debugUnlocked ? '' : 'クリアすると デバッグメニューが ひらく。') + '</div>';
     if (S.debugUnlocked && S.area >= LAST_AREA) h += '<button class="ok" style="width:100%" onclick="confirmPrestige()">カセットを さしなおす（' + (S.loop + 1) + '周目・ダメージ ×' + Math.pow(LOOP_MUL, S.loop) + '）</button>';
     h += '<h4>てきの つよさ</h4><div class="stat"><span>いまのエリアの てきHP</span><span>' + fmt(enemyHp(S.area, false)) + '</span></div><div class="stat"><span>おとす ゴールド</span><span>' + fmt(enemyGold(S.area, false)) + '</span></div><div class="stat"><span>1びょうの かせぎ（めやす）</span><span>' + fmt(goldPerSec()) + ' G</span></div>';
@@ -370,10 +443,11 @@ function renderPanel() {
       else h += '<div class="row"><span class="bugno">#' + no + '</span><div class="info"><div class="name">？？？</div><div class="sub">' + b.hint + '</div></div><span class="frag">◆' + b.frag + '</span></div>';
     });
   } else if (curTab === 'debug') {
-    if (!S.debugUnlocked) { h += '<div class="note" style="text-align:center;padding:30px 10px">🔒 デバッグメニュー<br><br>いちど 魔王を たおすと ひらく。<br><small>（メモリ片 ◆' + S.frags + ' は そのとき つかえる）</small></div>'; }
-    else {
-      h += '<div class="note">かいはつしゃの ためした きのう。<span class="frag">◆メモリ片</span>で かう。カラーパレットと BGM 以外を ONにすると、その周は「改造」きろくになる。</div>';
+    if (!S.debugUnlocked) h += '<div class="note">🔒 こわれかけの デバッグメニュー。いちど 魔王を たおすと ぜんぶ ひらく。いまは 一部だけ <span class="frag">◆メモリ片</span>で かえる。</div>';
+    else h += '<div class="note">かいはつしゃの ためした きのう。<span class="frag">◆メモリ片</span>で かう。カラーパレットと BGM 以外を ONにすると、その周は「改造」きろくになる。</div>';
+    {
       for (const c of CHEATS) {
+        if (!S.debugUnlocked && !HARMLESS_CHEATS.includes(c.id) && !S.cheats[c.id]) { h += '<div class="row locked"><div class="ico">🔒</div><div class="info"><div class="name">' + c.name + '</div><div class="sub">魔王を たおすと</div></div></div>'; continue; }
         const has = S.cheats[c.id], avail = cheatAvailable(c);
         let btn;
         if (!has) btn = '<button class="buy" ' + (avail && S.frags >= c.cost ? '' : 'disabled') + ' onclick="buyCheat(\'' + c.id + '\')">かう<br>◆' + c.cost + '</button>';
@@ -407,6 +481,7 @@ function buyAlly(id, n) {
   if (allyCount(S) === 13) discover('thirteen');
   renderParty(); renderPanel(); save();
 }
+function buyMile(id) { const a = ALLIES.find(x => x.id === id); const c = mileCost(a); if ((S.allies[id] || 0) < mileNext(a) || S.gold < c) return; S.gold -= c; S.mile[id] = (S.mile[id] || 0) + 1; sfx('buy'); toast(a.name + ' の DPS が 2倍に！'); if (S.gold === 0) discover('zero'); renderPanel(); save(); }
 function buySword() { const c = swordCost(); if (S.gold < c) return; S.gold -= c; S.sword++; sfx('buy'); if (S.gold === 0) discover('zero'); renderPanel(); save(); }
 function setName() { S.name = $('name').value.trim().slice(0, 8); toast('なまえ: ' + (S.name || 'ゆうしゃ')); secondChecks(); save(); }
 function toggleMute() { S.mute = !S.mute; renderPanel(); save(); }
@@ -438,7 +513,7 @@ function bgm(on) {
 }
 
 // ================= 開始 =================
-function renderAll() { renderParty(); renderPanel(); renderHud(); applyPalette(); }
+function renderAll() { renderParty(); renderPanel(); renderHud(); applyPalette(); renderSkills(); }
 spawn();
 renderAll();
 offline();

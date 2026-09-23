@@ -37,7 +37,7 @@ const ENEMIES = {
 // 敵HP・ゴールド（エリア番号 a = 1..60）
 const HP_GROWTH = 1.35;
 function enemyHp(a, boss) { return Math.floor(10 * Math.pow(HP_GROWTH, a - 1)) * (boss ? 10 : 1); }
-const GOLD_DECAY = 0.95; // 奥に行くほど HP に対するゴールドの割合が下がる（1周目のクリアが 20時間前後になる調整）
+const GOLD_DECAY = 0.98; // 奥に行くほど HP に対するゴールドの割合が下がる（放置で1周目クリアが 5〜6時間になる調整）
 function enemyGold(a, boss) { return Math.max(2, Math.ceil(enemyHp(a, false) / 4 * Math.pow(GOLD_DECAY, a - 1))) * (boss ? 15 : 1); }
 
 // ---- 仲間（自動で戦う。costGrowth 乗算） ----
@@ -54,6 +54,42 @@ const ALLIES = [
 const COST_GROWTH = 1.15;
 // 剣の強化（タップ1回のダメージ）
 const SWORD = { cost: 10, growth: 1.35, dmgPerLv: 1 };
+// 仲間の節目強化: 人数が MILESTONES に達するごとに、その仲間の DPS を2倍にする強化を買える（値段 = 今の1人分 × MILE_COST_MUL）
+const MILESTONES = [10, 25, 50, 100, 200];
+const MILE_COST_MUL = 10;
+
+// ---- スキル（エリア到達で解放。クールタイムあり） ----
+const SKILLS = [
+  { id: 'crit',   name: 'かいしん', short: 'かいしん', icon: '💥', desc: '15秒間 タップのダメージ ×10', unlockArea: 3,  cd: 180, dur: 15 },
+  { id: 'rush',   name: 'ゴールドラッシュ', short: 'ラッシュ', icon: '💰', desc: '30秒間 ゴールド ×3',         unlockArea: 8,  cd: 600, dur: 30 },
+  { id: 'allout', name: 'いっせいこうげき', short: 'いっせい', icon: '⚔️', desc: '仲間の1分ぶんの攻撃を いますぐ', unlockArea: 15, cd: 300 },
+];
+
+// ---- レア敵（通常エリアでたまに出る） ----
+const RARES = [
+  { id: 'mimic',  name: 'ミミック',  chance: 0.03, hpMul: 0.6, goldMul: 20, note: 'たからばこ だとおもった？' },
+  { id: 'glitch', name: '？？？',    chance: 0.02, hpMul: 3,   goldMul: 8,  frag: 1, note: 'バグった てき。たおすと メモリ片' },
+];
+
+// ---- ボス撃破のごほうび（3つから1つ選ぶ。魔王以外） ----
+const BOSS_REWARDS = [
+  { id: 'gold',   name: 'きんか の ふくろ',  desc: '10分ぶんの かせぎ' },
+  { id: 'sword',  name: 'でんせつの といし', desc: 'けん +5 レベル' },
+  { id: 'frag',   name: 'メモリ片 ×3',      desc: 'デバッグに つかえる' },
+  { id: 'buff',   name: 'ゆうきの はた',    desc: 'この周、仲間の DPS +20%' },
+  { id: 'cdreset', name: 'いのちの みず',   desc: 'スキルの クールタイムを ぜんぶ もどす' },
+  { id: 'luck',   name: 'ぬすっとの めがね', desc: 'つぎの 30たいの ゴールド ×2' },
+];
+
+// ---- ゾーンに入ったときの ひとこと ----
+const ZONE_INTRO = {
+  plain: 'ゆうしゃは たびに でた。……なんか がめんが ちらつく。',
+  forest: '木が うごいた きがする。',
+  cave: 'かべが うすい ところが あるらしい。',
+  mountain: 'ほねが ころがっている。りゅうは どこだ。',
+  castle: 'だれかが デバッグしていた あとが ある。',
+  demon: 'ここが さいごの エリアだ。',
+};
 const TAP_DPS_RATE = 0.01; // タップにDPSの1%を上乗せ
 
 // ---- 周回 ----

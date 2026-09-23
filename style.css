@@ -92,6 +92,20 @@ h4 { margin: 12px 0 6px; font-size: 15px; color: var(--accent); border-bottom: 1
 .ab.a { background: #c8304e; margin-bottom: 12px; } .ab.b { background: #a8284a; }
 .ab:active { filter: brightness(1.4); }
 
+/* ---- スキル ---- */
+#skills { display: flex; gap: 6px; padding: 8px 6px 0; flex: 0 0 auto; }
+#skills:empty { display: none; }
+.skill { flex: 1; font-size: 13px; padding: 5px 2px; line-height: 1.25; background: #2e3d5c; border-color: #5f8fe0; }
+.skill small { display: block; font-size: 12px; color: #cfe0ff; }
+.skill.locked { background: #221e30; border-color: #3a3450; color: #777; } .skill.locked small { color: #777; }
+.skill.cd { background: #2a2838; border-color: #3a3450; color: #999; } .skill.cd small { color: #999; }
+.skill.active { background: #7d5a2e; border-color: var(--accent); animation: blink 1s steps(1) infinite; }
+.reward { display: block; width: 100%; text-align: left; margin: 6px 0; padding: 10px; background: #2e5a7d; border-color: #5fa8e0; line-height: 1.4; }
+.reward small { color: #cfe0ff; }
+#enemy.rare-glitch { animation: rareglitch .4s steps(2) infinite; }
+@keyframes rareglitch { 0% { filter: hue-rotate(0deg); transform: translateX(0); } 50% { filter: hue-rotate(180deg) contrast(1.6); transform: translateX(3px) skewX(6deg); } 100% { filter: invert(.2); transform: translateX(-2px); } }
+#enemy.rare-mimic { filter: drop-shadow(0 0 8px #ffd35c); }
+
 /* ---- タブ・パネル ---- */
 #tabs { display: flex; gap: 3px; padding: 6px 6px 0; flex: 0 0 auto; }
 #tabs button { flex: 1; font-size: 14px; padding: 9px 0; border-radius: 8px 8px 0 0; border-bottom: none; background: #221e30; color: var(--muted); }
