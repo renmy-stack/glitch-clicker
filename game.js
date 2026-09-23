@@ -13,7 +13,7 @@ function newState() {
     bugs: {}, cheats: {}, cheatOn: {}, ach: {}, cool: {}, wallAreas: {},
     loop: 1, loopStart: Date.now(), cheated: false, name: '', mute: false, palette: 0,
     debugUnlocked: false, lastSave: Date.now(),
-    mile: {}, buff: 1, skillCd: {}, skillUntil: {}, luck: 0, zoneSeen: {},
+    mile: {}, buff: 1, skillCd: {}, skillUntil: {}, luck: 0, zoneSeen: {}, rewardQueue: 0,
     stats: { kills: 0, taps: 0, goldTotal: 0, bestArea: 1, endingsClean: 0, endingsCheat: 0, fastestClear: 0, area1Kills: 0, bugsFound: 0, playSec: 0, killsById: {}, killsByZone: {}, rareKills: {}, critKills: 0, milesBought: 0, rewards: {}, jumped: {}, injects: 0, toggles: 0, maouKills: 0, skillUses: 0, skillUsesLoop: 0, nameChanges: 0, bugsLoop: 0, saves: 0 },
     hints: {}, titles: {},
   };
@@ -119,7 +119,7 @@ function kill() {
   const wasBoss = E.boss;
   if (wasBoss) {
     if (S.area === LAST_AREA) { ending(); }
-    else { S.area++; S.kills = 0; S.stats.bestArea = Math.max(S.stats.bestArea, S.area); if (!ffRunning) setTimeout(bossReward, 500); areaChanged(); }
+    else { S.area++; S.kills = 0; S.stats.bestArea = Math.max(S.stats.bestArea, S.area); if (!ffRunning) { S.rewardQueue = (S.rewardQueue || 0) + 1; renderSkills(); showNotice('🎁 ごほうびを もらった！<br><small>したの「ごほうび」ボタンで うけとる</small>'); } areaChanged(); }
   } else {
     S.kills++;
     if (S.kills >= KILLS_PER_AREA) { S.area++; S.kills = 0; S.stats.bestArea = Math.max(S.stats.bestArea, S.area); areaChanged(); }
@@ -143,14 +143,17 @@ function zoneIntro() {
 }
 // ボス撃破のごほうび（3択）
 function bossReward() {
+  if (!(S.rewardQueue > 0)) return;
   const pool = BOSS_REWARDS.slice().sort(() => Math.random() - 0.5).slice(0, 3);
-  let html = '<div class="note">ボスを たおした！ ごほうびを ひとつ えらぶ</div>';
+  let html = '<div class="note">ボスの ごほうび（のこり ' + S.rewardQueue + '）。ひとつ えらぶ</div>';
   pool.forEach(r => { html += '<button class="reward" onclick="takeReward(\'' + r.id + '\')"><b>' + r.name + '</b><br><small>' + r.desc + '</small></button>'; });
   modal('ごほうび', html, []);
   sfx('ach');
 }
 function takeReward(id) {
   closeModal();
+  if (!(S.rewardQueue > 0)) return;
+  S.rewardQueue--;
   if (id === 'gold') { const g = Math.max(50, Math.floor(goldPerSec() * 600)); addGold(g); toast('+' + fmt(g) + 'G'); }
   if (id === 'sword') { S.sword += 5; toast('けん +5'); }
   if (id === 'frag') { S.frags += 3; toast('<span class="frag">メモリ片 +3</span>'); }
@@ -161,6 +164,7 @@ function takeReward(id) {
   B.rewardStreak = (id === B.lastReward) ? B.rewardStreak + 1 : 1; B.lastReward = id;
   bugEvent('reward', { id, streak: B.rewardStreak });
   renderAll(); save();
+  if (S.rewardQueue > 0) setTimeout(bossReward, 250);
 }
 // スキル
 function skillUnlocked(sk) { return S.stats.bestArea >= sk.unlockArea; }
@@ -184,7 +188,7 @@ function renderSkills() {
     const un = skillUnlocked(sk); const cd = Math.max(0, ((S.skillCd[sk.id] || 0) - now) / 1000); const act = skillActive(sk.id);
     const label = !un ? 'エリア' + sk.unlockArea : cd > 0 ? Math.ceil(cd) + 's' : 'OK';
     return '<button class="skill' + (un ? '' : ' locked') + (act ? ' active' : '') + (cd > 0 ? ' cd' : '') + '" onclick="useSkill(\'' + sk.id + '\')" title="' + sk.desc + '">' + sk.icon + ' ' + sk.short + '<small>' + label + '</small></button>';
-  }).join('');
+  }).join('') + (S.rewardQueue > 0 ? '<button class="skill gift" onclick="bossReward()">🎁 ごほうび<small>×' + S.rewardQueue + '</small></button>' : '');
   if (bar.innerHTML !== html) bar.innerHTML = html;
 }
 let ffRunning = false;
