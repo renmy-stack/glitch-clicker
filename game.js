@@ -31,6 +31,8 @@ function fmt(n) {
   if (n < 1e8) return trim(n / 1e4) + '万';
   if (n < 1e12) return trim(n / 1e8) + '億';
   if (n < 1e16) return trim(n / 1e12) + '兆';
+  if (n < 1e20) return trim(n / 1e16) + '京';
+  if (n < 1e24) return trim(n / 1e20) + '垓';
   return n.toExponential(2);
 }
 function trim(x) { return x >= 100 ? Math.floor(x) : x.toFixed(1).replace(/\.0$/, ''); }
@@ -66,7 +68,9 @@ function spawn() {
   const img = $('enemy');
   img.classList.remove('dead');
   img.className = boss ? 'boss' : (rare ? 'rare-' + rare.id : '');
-  img.src = 'assets/enemy/' + E.id + '.png';
+  const src = 'assets/enemy/' + E.id + '.png';
+  if (img.src.indexOf(src) < 0) { const pre = PRELOADED[src]; if (!pre || !pre.complete) { img.style.visibility = 'hidden'; img.onload = () => { img.style.visibility = ''; img.onload = null; }; } }
+  img.src = src;
   $('enemy-name').textContent = rare ? rare.name : ENEMIES[id].name + (boss ? ' (BOSS)' : '');
   $('bg').style.backgroundImage = 'url(assets/bg/' + z.id + '.jpg)';
   renderHud();
@@ -367,6 +371,7 @@ function offline() {
 // ================= 描画 =================
 function renderHud() {
   $('gold').textContent = fmt(S.gold) + ' G';
+  if (expanded) $('mini-hud').textContent = 'エリア ' + S.area + '  ' + fmt(S.gold) + ' G' + (E ? '  HP ' + Math.max(0, Math.round(E.hp / E.max * 100)) + '%' : '');
   $('area-name').textContent = zoneOf().name + (S.loop > 1 ? ' ' + S.loop + '周' : '');
   $('area-no').textContent = 'エリア ' + S.area;
   $('progfill').style.width = (isBossArea() ? (E ? (1 - E.hp / E.max) * 100 : 0) : S.kills / KILLS_PER_AREA * 100) + '%';
@@ -400,6 +405,15 @@ function closeModal() { $('modal').classList.remove('show'); }
 function markTab(tab) { const b = document.querySelector('#tabs button[data-tab=' + tab + ']'); if (!b.classList.contains('on') && !b.querySelector('.dot')) b.insertAdjacentHTML('beforeend', '<span class="dot"></span>'); }
 
 let curTab = 'party', buyN = 1;
+let expanded = false;
+function setExpanded(on) {
+  expanded = on; document.body.classList.toggle('expanded', on);
+  $('handle').textContent = on ? '▼ ゲームがめんに もどる' : '▲ したの欄を ひろげる';
+  try { localStorage.setItem('glitch-expanded', on ? '1' : ''); } catch (e) {}
+  renderHud();
+}
+$('handle').addEventListener('click', () => setExpanded(!expanded));
+try { if (localStorage.getItem('glitch-expanded')) setExpanded(true); } catch (e) {}
 function showTab(tab) { curTab = tab; document.querySelectorAll('#tabs button').forEach(b => { b.classList.toggle('on', b.dataset.tab === tab); if (b.dataset.tab === tab) { const d = b.querySelector('.dot'); if (d) d.remove(); } }); renderPanel(); $('panel').scrollTop = 0; }
 document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
@@ -511,6 +525,13 @@ function bgm(on) {
   let i = 0;
   bgmTimer = setInterval(() => { let f = seq[i++ % seq.length]; if (f && Math.random() < 0.15) f *= [0.5, 2, 1.06, 0.94][Math.floor(Math.random() * 4)]; if (f) beep(f, 0.12, 'square', 0.04); }, 140);
 }
+
+// 画像のプリロード（読み込み前は前の絵が残って、名前とずれるため）
+const PRELOADED = {};
+function preload(src) { if (PRELOADED[src]) return; const im = new Image(); im.src = src; PRELOADED[src] = im; }
+function preloadZone(z) { [...z.enemies, z.boss].forEach(id => preload('assets/enemy/' + id + '.png')); preload('assets/bg/' + z.id + '.jpg'); }
+function preloadAll() { ZONES.forEach(preloadZone); RARES.forEach(r => preload('assets/enemy/' + r.id + '.png')); ALLIES.forEach(a => preload('assets/ally/' + a.id + '.png')); }
+setTimeout(preloadAll, 1500);
 
 // ================= 開始 =================
 function renderAll() { renderParty(); renderPanel(); renderHud(); applyPalette(); renderSkills(); }
