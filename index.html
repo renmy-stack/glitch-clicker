@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#14121a">
+<title>グリッチ・クリッカー</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- 拾ったゲーム機 -->
+  <div id="console">
+    <div class="console-top">
+      <span id="led" class="led"></span>
+      <span class="brand">GLITCH BOY</span>
+      <button id="power" class="power" title="でんげん">⏻</button>
+    </div>
+
+    <div id="screen">
+      <div id="bg"></div>
+      <div id="hud">
+        <div id="area-name">はじまりの草原</div>
+        <div id="area-no">エリア 1</div>
+        <div id="gold">0 G</div>
+      </div>
+      <div id="battle">
+        <div id="enemy-wrap">
+          <div id="enemy-name">スライム</div>
+          <img id="enemy" alt="">
+          <div id="hpbar"><div id="hpfill"></div></div>
+          <div id="hptext">10 / 10</div>
+        </div>
+        <div id="progress"><div id="progfill"></div></div>
+      </div>
+      <div id="party"></div>
+      <div id="fx"></div>
+      <div id="title" class="overlay">
+        <div class="title-logo" id="title-logo">ゆうしゃ<br>クエスト</div>
+        <div class="title-sub">PUSH A BUTTON</div>
+        <div class="title-copy">©1989 GLITCH SOFT</div>
+      </div>
+      <div id="off" class="overlay" hidden></div>
+      <div id="notice" hidden></div>
+    </div>
+
+    <div class="console-bottom">
+      <div id="dpad">
+        <button data-k="up" class="dp up">▲</button>
+        <button data-k="left" class="dp left">◀</button>
+        <button data-k="right" class="dp right">▶</button>
+        <button data-k="down" class="dp down">▼</button>
+      </div>
+      <div id="mid">
+        <button data-k="select" class="pill">SELECT</button>
+        <button data-k="start" class="pill">START</button>
+      </div>
+      <div id="ab">
+        <button data-k="b" class="ab b">B</button>
+        <button data-k="a" class="ab a">A</button>
+      </div>
+    </div>
+  </div>
+
+  <nav id="tabs">
+    <button data-tab="party" class="on">仲間</button>
+    <button data-tab="upgrade">強化</button>
+    <button data-tab="bugs">裏技帳</button>
+    <button data-tab="debug">デバッグ</button>
+    <button data-tab="records">記録</button>
+    <button data-tab="settings">設定</button>
+  </nav>
+
+  <section id="panel"></section>
+
+  <div id="toast"></div>
+  <div id="modal">
+    <div class="modal-box">
+      <h3 id="modal-title"></h3>
+      <div id="modal-body"></div>
+      <div id="modal-buttons"><button id="modal-close">OK</button></div>
+    </div>
+  </div>
+</div>
+<script src="data.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

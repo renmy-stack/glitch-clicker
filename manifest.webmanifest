@@ -1,0 +1,10 @@
+{
+  "name": "グリッチ・クリッカー",
+  "short_name": "グリッチ",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#14121a",
+  "theme_color": "#14121a",
+  "orientation": "any",
+  "icons": [{ "src": "assets/icon.png", "sizes": "512x512", "type": "image/png" }]
+}
