@@ -31,5 +31,7 @@ python -m http.server 8091
 で http://127.0.0.1:8091/?debug を開くと、コンソールで `ff(秒)`（早送り）、`tapN(回数)`、`S`（状態）が使える。
 セーブは localStorage（キー `glitch-clicker-save`）。
 
+実機での開発用: URL に `?dev` を付けると 設定タブに「⏩ はやおくり ×1000」「1じかん すすめる」「8じかん すすめる」が出る（公開URL でも可: `https://renmy-stack.github.io/glitch-clicker/?dev`）。使うとその周は「改造」扱い。
+
 ## クレジット
 - フォント: DotGothic16（フォントワークス, SIL OFL）

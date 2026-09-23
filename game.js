@@ -4,6 +4,8 @@
 
 const SAVE_KEY = 'glitch-clicker-save';
 const DEBUG = location.search.includes('debug');
+const DEV = location.search.includes('dev') || DEBUG; // 開発用（?dev）: 設定タブに早送りが出る
+let devFast = false;
 const $ = (id) => document.getElementById(id);
 
 // ================= 状態 =================
@@ -136,7 +138,7 @@ function kill() {
   const wasBoss = E.boss;
   if (wasBoss) {
     if (S.area === LAST_AREA) { ending(); }
-    else { S.area++; S.kills = 0; S.stats.bestArea = Math.max(S.stats.bestArea, S.area); if (!ffRunning) { S.rewardQueue = (S.rewardQueue || 0) + 1; renderSkills(); showNotice('🎁 ごほうびを もらった！<br><small>したの「ごほうび」ボタンで うけとる</small>'); } areaChanged(); }
+    else { S.area++; S.kills = 0; S.stats.bestArea = Math.max(S.stats.bestArea, S.area); S.rewardQueue = (S.rewardQueue || 0) + 1; if (!ffRunning) { renderSkills(); showNotice('🎁 ごほうびを もらった！<br><small>したの「ごほうび」ボタンで うけとる</small>'); } areaChanged(); }
   } else {
     S.kills++;
     if (S.kills >= KILLS_PER_AREA) { S.area++; S.kills = 0; S.stats.bestArea = Math.max(S.stats.bestArea, S.area); areaChanged(); }
@@ -478,6 +480,7 @@ function tick(dt) {
 }
 setInterval(() => {
   const now = performance.now(); const dt = Math.min(1, (now - last) / 1000); last = now;
+  if (devFast && !titleShown && !screenOff) { ffRunning = true; for (let i = 0; i < 100; i++) tick(1); ffRunning = false; S.stats.playSec += 100; spawn(); renderAll(); return; }
   tick(dt);
 }, 100);
 setInterval(() => { secondChecks(); renderHud(); renderSkills(); }, 1000);
@@ -631,6 +634,11 @@ function renderPanel() {
     h += '<h4>プレイヤー</h4><div class="note">なまえ（8もじまで）</div><input type="text" id="name" maxlength="8" value="' + esc(S.name) + '" placeholder="ゆうしゃ"><button class="mini" style="margin-top:6px" onclick="setName()">きめる</button>';
     h += '<h4>おと</h4><button class="mini" onclick="toggleBgm()">BGM: ' + (S.bgm ? 'ON' : 'OFF') + '</button> <button class="mini" onclick="toggleMute()">こうかおん: ' + (S.mute ? 'OFF' : 'ON') + '</button><div class="note">BGM は 8bit風。ゾーン・ボス・タイトルで かわる。「かくしBGM」チートで バグった版に</div>';
     h += '<h4>データ</h4><button class="mini" onclick="manualSave()">いま セーブ</button> <button class="mini danger" onclick="confirmReset()">ぜんぶ けす</button>';
+    if (DEV) {
+      h += '<h4>🛠 かいはつよう</h4><div class="note">テスト用。URL に ?dev を つけたときだけ 出る。記録は「改造」あつかい。</div>';
+      h += '<button class="mini ' + (devFast ? 'ok' : '') + '" onclick="toggleDevFast()">⏩ はやおくり ×1000: ' + (devFast ? 'ON' : 'OFF') + '</button> ';
+      h += '<button class="mini" onclick="devFF(3600)">1じかん すすめる</button> <button class="mini" onclick="devFF(8*3600)">8じかん すすめる</button>';
+    }
     h += '<h4>これは なに</h4><div class="note">ひろった ふるいゲーム機「GLITCH BOY」に はいっていた RPG。なんだか バグが おおい。タップで てきを たおし、なかまを やとって ほうち。おかしな操作で「裏技」を みつけ、クリアすると「デバッグメニュー」が ひらく。<br>v0.1 (2026-09-23)</div>';
   }
   p.innerHTML = h; renderHud();
@@ -649,6 +657,8 @@ function buyAlly(id, n) {
 function buyMile(id) { const a = ALLIES.find(x => x.id === id); const c = mileCost(a); if ((S.allies[id] || 0) < mileNext(a) || S.gold < c) return; S.gold -= c; S.mile[id] = (S.mile[id] || 0) + 1; S.stats.milesBought++; sfx('buy'); toast(a.name + ' の DPS が 2倍に！'); bugEvent('buy', { what: 'mile', id, n: 1, allyCount: allyCount(S), gold: Math.floor(S.gold), exact: false, maxStreak: 0 }); renderPanel(); save(); }
 function buySword() { const c = swordCost(); if (S.gold < c) return; S.gold -= c; S.sword++; sfx('buy'); if (!ffRunning) bugEvent('buy', { what: 'sword', id: 'sword', n: 1, allyCount: allyCount(S), gold: Math.floor(S.gold), exact: false, maxStreak: 0 }); renderPanel(); save(); }
 function setName() { S.name = $('name').value.trim().slice(0, 8); S.stats.nameChanges++; toast('なまえ: ' + (S.name || 'ゆうしゃ')); bugEvent('name', { name: S.name, changes: S.stats.nameChanges }); save(); }
+function toggleDevFast() { devFast = !devFast; if (devFast) markCheated(); toast(devFast ? '⏩ ×1000 ON' : '⏩ OFF'); renderPanel(); }
+function devFF(sec) { markCheated(); ffRunning = true; for (let i = 0; i < sec; i++) tick(1); ffRunning = false; S.stats.playSec += sec; spawn(); renderAll(); toast(fmtTime(sec) + ' すすめた'); save(); }
 function toggleMute() { S.mute = !S.mute; renderPanel(); save(); }
 function toggleBgm() { S.bgm = !S.bgm; audioInit(); MUSIC.setEnabled(S.bgm); if (S.bgm) updateMusic(); renderPanel(); save(); }
 function confirmPrestige() { modal('カセットを さしなおす', 'ゴールド・なかま・けん・エリアが 最初にもどる。<br>裏技・メモリ片・チート・じっせきは のこる。<br>' + (S.loop + 1) + '周目は 全ダメージ ×' + Math.pow(LOOP_MUL, S.loop), [{ label: 'やめる' }, { label: 'さしなおす', cls: 'ok', fn: prestige }]); }
