@@ -99,17 +99,19 @@ const LOOP_MUL = 4; // 差し直すたびに全ダメージ ×4（2周目 ×4、
 
 // ---- 公式チート（デバッグメニュー）。エンディング後に解放、メモリ片で購入 ----
 const CHEATS = [
-  { id: 'palette', name: 'カラーパレット',   cost: 3,  desc: 'がめんの色を切り替える', type: 'cycle', opts: ['ふつう', 'みどり', 'しろくろ', 'あか'] },
-  { id: 'bgm',     name: 'かくしBGM',       cost: 5,  desc: 'BGM が バグった版になる（音がずれる）', type: 'toggle' },
-  { id: 'speed2',  name: 'そくど ×2',       cost: 5,  desc: '仲間の攻撃が2倍速', type: 'toggle', speed: 2 },
-  { id: 'stage',   name: 'ステージセレクト', cost: 8,  desc: '行ったことのあるエリアへ飛ぶ', type: 'button' },
-  { id: 'gold',    name: 'ゴールド注入',     cost: 10, desc: '10分ぶんの稼ぎをもらう（10分に1回）', type: 'button', cooldown: 600 },
-  { id: 'auto',    name: 'オートタップ',     cost: 12, desc: '勝手に 秒5回 タップする', type: 'toggle' },
-  { id: 'speed5',  name: 'そくど ×5',       cost: 15, desc: '仲間の攻撃が5倍速', type: 'toggle', speed: 5, needBugs: 15 },
-  { id: 'hp1',     name: 'てきHP=1',        cost: 30, desc: 'どんな敵も1発', type: 'toggle', needBugs: 30 },
-  { id: 'speed10', name: 'そくど ×10',      cost: 40, desc: '仲間の攻撃が10倍速', type: 'toggle', speed: 10, needBugs: 60 },
-  { id: 'edit',    name: 'セーブ改造',       cost: 50, desc: 'ゴールドとメモリ片を直接いじる', type: 'button', needBugs: 100 },
+  { id: 'palette', name: 'カラーパレット',   cost: 5,   desc: 'がめんの色を切り替える', type: 'cycle', opts: ['ふつう', 'みどり', 'しろくろ', 'あか'] },
+  { id: 'bgm',     name: 'かくしBGM',       cost: 10,  desc: 'BGM が バグった版になる（音がずれる）', type: 'toggle' },
+  { id: 'speed2',  name: 'そくど ×2',       cost: 30,  desc: '仲間の攻撃が2倍速', type: 'toggle', speed: 2 },
+  { id: 'stage',   name: 'ステージセレクト', cost: 40,  desc: '行ったことのあるエリアへ飛ぶ', type: 'button', needBugs: 20 },
+  { id: 'gold',    name: 'ゴールド注入',     cost: 60,  desc: '10分ぶんの稼ぎをもらう（10分に1回）', type: 'button', cooldown: 600, needBugs: 30 },
+  { id: 'auto',    name: 'オートタップ',     cost: 80,  desc: '勝手に 秒5回 タップする', type: 'toggle', needBugs: 40 },
+  { id: 'speed5',  name: 'そくど ×5',       cost: 120, desc: '仲間の攻撃が5倍速', type: 'toggle', speed: 5, needBugs: 60 },
+  { id: 'hp1',     name: 'てきHP=1',        cost: 200, desc: 'どんな敵も1発', type: 'toggle', needBugs: 100 },
+  { id: 'speed10', name: 'そくど ×10',      cost: 300, desc: '仲間の攻撃が10倍速', type: 'toggle', speed: 10, needBugs: 150 },
+  { id: 'edit',    name: 'セーブ改造',       cost: 500, desc: 'ゴールドとメモリ片を直接いじる（さいごの きのう）', type: 'button', needBugs: 250, needLoop: 3 },
 ];
+// 旧バージョン（v0.3 まで）の値段。セーブ移行の返金に使う
+const CHEATS_OLD_COST = { palette: 3, bgm: 5, speed2: 5, stage: 8, gold: 10, auto: 12, speed5: 15, hp1: 30, speed10: 40, edit: 50 };
 // 記録を汚さないチート（ONでも「正規」扱い）
 const HARMLESS_CHEATS = ['palette', 'bgm'];
 

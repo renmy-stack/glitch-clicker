@@ -19,6 +19,19 @@ function newState() {
   };
 }
 let S = load();
+(function migrateCheats() {
+  if (S.v >= 2) return;
+  S.v = 2;
+  const refunded = [];
+  for (const c of CHEATS) {
+    if (!S.cheats[c.id]) continue;
+    const ok = (!c.needBugs || Object.keys(S.bugs).length >= c.needBugs) && (!c.needLoop || S.loop >= c.needLoop);
+    if (ok) continue;
+    delete S.cheats[c.id]; delete S.cheatOn[c.id];
+    S.frags += CHEATS_OLD_COST[c.id] || 0; refunded.push(c.name);
+  }
+  if (refunded.length) setTimeout(() => modal('デバッグメニューの ちょうせい', 'かいはつしゃメニューが やすすぎたので、ねだんと じょうけんを あげました。<br>じょうけんを みたしていない つぎの きのうは いったん ロックして、メモリ片を へんきんしました。<br><br>' + refunded.join('・') + '<br><br><small>もういちど かうには 裏技を あつめてください。</small>'), 800);
+})();
 function load() {
   try { const raw = localStorage.getItem(SAVE_KEY); if (raw) { const s = JSON.parse(raw); return Object.assign(newState(), s, { stats: Object.assign(newState().stats, s.stats || {}) }); } } catch (e) {}
   return newState();
@@ -377,7 +390,7 @@ function renderRumor() {
 
 // ================= チート =================
 function cheatDef(id) { return CHEATS.find(c => c.id === id); }
-function cheatAvailable(c) { return (S.debugUnlocked || HARMLESS_CHEATS.includes(c.id)) && (!c.needBugs || bugCount() >= c.needBugs); }
+function cheatAvailable(c) { return (S.debugUnlocked || HARMLESS_CHEATS.includes(c.id)) && (!c.needBugs || bugCount() >= c.needBugs) && (!c.needLoop || S.loop >= c.needLoop); }
 function buyCheat(id) {
   const c = cheatDef(id);
   if (S.cheats[id] || !cheatAvailable(c) || S.frags < c.cost) return;
@@ -600,7 +613,7 @@ function renderPanel() {
         else if (c.type === 'toggle') btn = '<button onclick="toggleCheat(\'' + c.id + '\')">' + (S.cheatOn[c.id] ? 'ON' : 'OFF') + '</button>';
         else if (c.type === 'cycle') btn = '<button onclick="useCheat(\'' + c.id + '\')">' + c.opts[S.palette] + '</button>';
         else btn = '<button onclick="useCheat(\'' + c.id + '\')">つかう</button>';
-        h += '<div class="row ' + (S.cheatOn[c.id] ? 'on' : '') + (avail || has ? '' : ' locked') + '"><div class="ico">' + (has ? '🧪' : '🔒') + '</div><div class="info"><div class="name">' + c.name + '</div><div class="sub">' + c.desc + (!has && c.needBugs && bugCount() < c.needBugs ? '<br>裏技を ' + c.needBugs + 'こ みつけると' : '') + '</div></div>' + btn + '</div>';
+        h += '<div class="row ' + (S.cheatOn[c.id] ? 'on' : '') + (avail || has ? '' : ' locked') + '"><div class="ico">' + (has ? '🧪' : '🔒') + '</div><div class="info"><div class="name">' + c.name + '</div><div class="sub">' + c.desc + (!has && c.needBugs && bugCount() < c.needBugs ? '<br>裏技を ' + c.needBugs + 'こ みつけると（いま ' + bugCount() + '）' : '') + (!has && c.needLoop && S.loop < c.needLoop ? '<br>' + c.needLoop + '周目から' : '') + '</div></div>' + btn + '</div>';
       }
     }
   } else if (curTab === 'records') {
