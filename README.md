@@ -20,6 +20,7 @@ iPhone の Safari で遊ぶ Web アプリ（PWA）。
 - `data.js` … ゾーン・敵・仲間・スキル・チート・実績の定義（数値調整はここ）
 - `bugs.js` … 裏技330個の定義（章・ヒント・★・イベント・判定・常時効果）。追加は `add(章, id, 名前, ヒント, ★, イベント, 判定)` 1行
 - `game.js` … ゲーム本体（状態・戦闘・裏技検出・チート・周回・描画・セーブ）
+- `music.js` … 8bit風 BGM（WebAudio のステップシーケンサー。曲はタイトル・草原/森・洞窟/山・城/魔王城・ボスの5曲。音源ファイルなし）
 - `sw.js` / `manifest.webmanifest` … PWA
 - `assets/enemy/*.png` `assets/ally/*.png` `assets/bg/*.jpg` `assets/icon.png` … 画像（ChatGPT 生成）
 

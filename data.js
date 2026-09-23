@@ -100,7 +100,7 @@ const LOOP_MUL = 4; // 差し直すたびに全ダメージ ×4（2周目 ×4、
 // ---- 公式チート（デバッグメニュー）。エンディング後に解放、メモリ片で購入 ----
 const CHEATS = [
   { id: 'palette', name: 'カラーパレット',   cost: 3,  desc: 'がめんの色を切り替える', type: 'cycle', opts: ['ふつう', 'みどり', 'しろくろ', 'あか'] },
-  { id: 'bgm',     name: 'かくしBGM',       cost: 5,  desc: 'バグったチップチューンを鳴らす', type: 'toggle' },
+  { id: 'bgm',     name: 'かくしBGM',       cost: 5,  desc: 'BGM が バグった版になる（音がずれる）', type: 'toggle' },
   { id: 'speed2',  name: 'そくど ×2',       cost: 5,  desc: '仲間の攻撃が2倍速', type: 'toggle', speed: 2 },
   { id: 'stage',   name: 'ステージセレクト', cost: 8,  desc: '行ったことのあるエリアへ飛ぶ', type: 'button' },
   { id: 'gold',    name: 'ゴールド注入',     cost: 10, desc: '10分ぶんの稼ぎをもらう（10分に1回）', type: 'button', cooldown: 600 },

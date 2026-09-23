@@ -12,7 +12,7 @@ function newState() {
     v: 1, gold: 0, frags: 0, area: 1, kills: 0, sword: 0, allies: {},
     bugs: {}, cheats: {}, cheatOn: {}, ach: {}, cool: {}, wallAreas: {},
     loop: 1, loopStart: Date.now(), cheated: false, name: '', mute: false, palette: 0,
-    debugUnlocked: false, lastSave: Date.now(),
+    debugUnlocked: false, lastSave: Date.now(), bgm: true,
     mile: {}, buff: 1, skillCd: {}, skillUntil: {}, luck: 0, zoneSeen: {}, rewardQueue: 0,
     stats: { kills: 0, taps: 0, goldTotal: 0, bestArea: 1, endingsClean: 0, endingsCheat: 0, fastestClear: 0, area1Kills: 0, bugsFound: 0, playSec: 0, killsById: {}, killsByZone: {}, rareKills: {}, critKills: 0, milesBought: 0, rewards: {}, jumped: {}, injects: 0, toggles: 0, maouKills: 0, skillUses: 0, skillUsesLoop: 0, nameChanges: 0, bugsLoop: 0, saves: 0 },
     hints: {}, titles: {},
@@ -77,7 +77,7 @@ function spawn() {
   img.src = src;
   $('enemy-name').textContent = rare ? rare.name : ENEMIES[id].name + (boss ? ' (BOSS)' : '');
   $('bg').style.backgroundImage = 'url(assets/bg/' + z.id + '.jpg)';
-  renderHud();
+  renderHud(); updateMusic();
 }
 function damage(d, crit, tap) {
   if (!E || E.hp <= 0 || screenOff || titleShown) return;
@@ -268,7 +268,7 @@ function startGame() {
   if (titleShown) bugEvent('title', { taps: B.titleTaps, waitSec: (Date.now() - B.titleSince) / 1000 });
   titleShown = false; $('title').hidden = true; B.titleTaps = 0; $('title-logo').style.transform = ''; audioInit(); zoneIntro(); renderSkills();
 }
-function showTitle() { titleShown = true; $('title').hidden = false; B.titleSince = Date.now(); renderRumor(); }
+function showTitle() { titleShown = true; $('title').hidden = false; B.titleSince = Date.now(); renderRumor(); updateMusic(); }
 
 // ゲーム機のボタン
 document.querySelectorAll('[data-k]').forEach(btn => {
@@ -290,7 +290,7 @@ document.querySelectorAll('[data-k]').forEach(btn => {
 });
 $('power').addEventListener('click', () => {
   screenOff = !screenOff;
-  $('off').hidden = !screenOff; $('led').classList.toggle('off', screenOff);
+  $('off').hidden = !screenOff; $('led').classList.toggle('off', screenOff); updateMusic();
   const now = performance.now(); B.powerTimes.push(now); B.powerTimes = B.powerTimes.filter(t => now - t < 5000);
   if (screenOff) { B.offSince = Date.now(); B.blindTaps = 0; bugEvent('poweroff', { boss: !!(E && E.boss && E.hp > 0) }); }
   else { bugEvent('poweron', { offSec: (Date.now() - B.offSince) / 1000 }); }
@@ -389,7 +389,7 @@ function toggleCheat(id) {
   S.cheatOn[id] = !S.cheatOn[id];
   S.stats.toggles++; bugEvent('cheat', { action: 'toggle', id, on: S.cheatOn[id] });
   if (S.cheatOn[id] && !HARMLESS_CHEATS.includes(id)) markCheated();
-  if (id === 'bgm') bgm(S.cheatOn.bgm);
+  if (id === 'bgm') { MUSIC.setGlitch(S.cheatOn.bgm); }
   if (id === 'hp1' && E) { E.max = curHp(E.boss); E.hp = Math.min(E.hp, E.max); renderHp(); }
   renderPanel(); save();
 }
@@ -465,8 +465,10 @@ setInterval(() => {
 }, 100);
 setInterval(() => { secondChecks(); renderHud(); renderSkills(); }, 1000);
 setInterval(save, 10000);
-document.addEventListener('visibilitychange', () => { if (document.hidden) save(); else { last = performance.now(); B.visCount++; bugEvent('visibility', { count: B.visCount }); } });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { save(); MUSIC.pause(); } else { last = performance.now(); if (AC) { AC.resume(); updateMusic(); } B.visCount++; bugEvent('visibility', { count: B.visCount }); } });
 window.addEventListener('pagehide', save);
+// どこを触っても音を有効化（iOS/Chrome は操作がないと音が出ない）
+document.addEventListener('pointerdown', () => { if (!AC) audioInit(); else if (AC.state === 'suspended') { AC.resume(); updateMusic(); } }, { passive: true });
 
 // オフライン進行
 function offline() {
@@ -609,7 +611,7 @@ function renderPanel() {
     for (const a of ACHIEVEMENTS) h += '<div class="row ' + (S.ach[a.id] ? 'found' : 'locked') + '"><div class="ico">' + (S.ach[a.id] ? '🏆' : '·') + '</div><div class="info"><div class="name">' + a.name + '</div><div class="sub">' + a.desc + '</div></div><span class="frag">◆' + a.frag + '</span></div>';
   } else if (curTab === 'settings') {
     h += '<h4>プレイヤー</h4><div class="note">なまえ（8もじまで）</div><input type="text" id="name" maxlength="8" value="' + esc(S.name) + '" placeholder="ゆうしゃ"><button class="mini" style="margin-top:6px" onclick="setName()">きめる</button>';
-    h += '<h4>おと</h4><button class="mini" onclick="toggleMute()">こうかおん: ' + (S.mute ? 'OFF' : 'ON') + '</button>';
+    h += '<h4>おと</h4><button class="mini" onclick="toggleBgm()">BGM: ' + (S.bgm ? 'ON' : 'OFF') + '</button> <button class="mini" onclick="toggleMute()">こうかおん: ' + (S.mute ? 'OFF' : 'ON') + '</button><div class="note">BGM は 8bit風。ゾーン・ボス・タイトルで かわる。「かくしBGM」チートで バグった版に</div>';
     h += '<h4>データ</h4><button class="mini" onclick="manualSave()">いま セーブ</button> <button class="mini danger" onclick="confirmReset()">ぜんぶ けす</button>';
     h += '<h4>これは なに</h4><div class="note">ひろった ふるいゲーム機「GLITCH BOY」に はいっていた RPG。なんだか バグが おおい。タップで てきを たおし、なかまを やとって ほうち。おかしな操作で「裏技」を みつけ、クリアすると「デバッグメニュー」が ひらく。<br>v0.1 (2026-09-23)</div>';
   }
@@ -630,13 +632,15 @@ function buyMile(id) { const a = ALLIES.find(x => x.id === id); const c = mileCo
 function buySword() { const c = swordCost(); if (S.gold < c) return; S.gold -= c; S.sword++; sfx('buy'); if (!ffRunning) bugEvent('buy', { what: 'sword', id: 'sword', n: 1, allyCount: allyCount(S), gold: Math.floor(S.gold), exact: false, maxStreak: 0 }); renderPanel(); save(); }
 function setName() { S.name = $('name').value.trim().slice(0, 8); S.stats.nameChanges++; toast('なまえ: ' + (S.name || 'ゆうしゃ')); bugEvent('name', { name: S.name, changes: S.stats.nameChanges }); save(); }
 function toggleMute() { S.mute = !S.mute; renderPanel(); save(); }
+function toggleBgm() { S.bgm = !S.bgm; audioInit(); MUSIC.setEnabled(S.bgm); if (S.bgm) updateMusic(); renderPanel(); save(); }
 function confirmPrestige() { modal('カセットを さしなおす', 'ゴールド・なかま・けん・エリアが 最初にもどる。<br>裏技・メモリ片・チート・じっせきは のこる。<br>' + (S.loop + 1) + '周目は 全ダメージ ×' + Math.pow(LOOP_MUL, S.loop), [{ label: 'やめる' }, { label: 'さしなおす', cls: 'ok', fn: prestige }]); }
 function manualSave() { save(); S.stats.saves++; toast('セーブした'); bugEvent('save', { count: S.stats.saves }); }
 function confirmReset() { modal('ぜんぶ けす', 'セーブデータを 完全にけす。裏技帳も メモリ片も きえる。', [{ label: 'やめる', fn: () => bugEvent('resetcancel', {}) }, { label: 'けす', cls: 'danger', fn: () => { localStorage.removeItem(SAVE_KEY); location.reload(); } }]); }
 
 // ================= 音（WebAudio の かんたんビープ） =================
 let AC = null, bgmTimer = null;
-function audioInit() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (AC && AC.state === 'suspended') AC.resume(); }
+function audioInit() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); MUSIC.ensure(AC); MUSIC.setEnabled(S.bgm); MUSIC.setGlitch(!!S.cheatOn.bgm); } catch (e) {} } if (AC && AC.state === 'suspended') AC.resume(); updateMusic(); }
+function updateMusic() { if (!AC) return; if (screenOff) { MUSIC.pause(); return; } MUSIC.play(MUSIC.songFor(zoneOf().id, !!(E && E.boss), titleShown)); }
 function beep(freq, dur, type = 'square', vol = 0.08, when = 0) {
   if (!AC || S.mute) return;
   const o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.value = freq; g.gain.value = vol;
@@ -649,13 +653,6 @@ function sfx(k) {
   if (k === 'buy') beep(880, 0.05, 'triangle');
   if (k === 'ach') { beep(784, 0.1); beep(1046, 0.25, 'square', 0.08, 0.1); }
   if (k === 'bug') { for (let i = 0; i < 8; i++) beep(200 + Math.random() * 1200, 0.06, 'sawtooth', 0.06, i * 0.05); }
-}
-function bgm(on) {
-  clearInterval(bgmTimer); bgmTimer = null;
-  if (!on || !AC) return;
-  const seq = [262, 330, 392, 330, 262, 392, 494, 392, 349, 440, 523, 440, 262, 0, 330, 0];
-  let i = 0;
-  bgmTimer = setInterval(() => { let f = seq[i++ % seq.length]; if (f && Math.random() < 0.15) f *= [0.5, 2, 1.06, 0.94][Math.floor(Math.random() * 4)]; if (f) beep(f, 0.12, 'square', 0.04); }, 140);
 }
 
 // 画像のプリロード（読み込み前は前の絵が残って、名前とずれるため）
@@ -672,7 +669,6 @@ spawn();
 renderAll();
 renderRumor();
 offline();
-if (S.cheatOn.bgm) S.cheatOn.bgm = false; // 音は 操作してから
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
 // デバッグ: ?debug で ff(秒) が使える（仲間の攻撃を早送り）
