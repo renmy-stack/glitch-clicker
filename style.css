@@ -102,8 +102,9 @@ h4 { margin: 12px 0 6px; font-size: 15px; color: var(--accent); border-bottom: 1
 .skill small { display: block; font-size: 12px; color: #cfe0ff; }
 .skill.locked { background: #221e30; border-color: #3a3450; color: #777; } .skill.locked small { color: #777; }
 .skill.cd { background: #2a2838; border-color: #3a3450; color: #999; } .skill.cd small { color: #999; }
-.skill.gift { background: #7d3a5e; border-color: #ff9ad0; animation: blink 1.2s steps(1) infinite; }
-.skill.active { background: #7d5a2e; border-color: var(--accent); animation: blink 1s steps(1) infinite; }
+.skill.gift { background: #7d3a5e; border-color: #ff9ad0; animation: pulse 1.2s ease-in-out infinite; }
+.skill.active { background: #7d5a2e; border-color: var(--accent); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,211,92,.0); } 50% { box-shadow: 0 0 10px 2px rgba(255,211,92,.7); } }
 .reward { display: block; width: 100%; text-align: left; margin: 6px 0; padding: 10px; background: #2e5a7d; border-color: #5fa8e0; line-height: 1.4; }
 .reward small { color: #cfe0ff; }
 #enemy.rare-glitch { animation: rareglitch .4s steps(2) infinite; }
@@ -112,12 +113,19 @@ h4 { margin: 12px 0 6px; font-size: 15px; color: var(--accent); border-bottom: 1
 
 /* ---- ひろげる ---- */
 #handle { display: block; width: calc(100% - 12px); margin: 6px 6px 0; padding: 6px; font-size: 13px; color: var(--muted); background: #221e30; border: 2px solid #3a3450; border-radius: 8px; }
-#mini-hud { display: none; flex: 1; text-align: right; font-size: 13px; letter-spacing: 0; color: var(--accent); }
+#mini-hud { display: none; justify-content: space-between; gap: 6px; padding: 4px 6px 2px; font-family: var(--pixel); font-size: 14px; color: var(--text); white-space: nowrap; }
+#mini-hud span { flex: 1; text-align: center; background: #221e30; border-radius: 6px; padding: 4px 2px; overflow: hidden; text-overflow: ellipsis; }
+#mh-gold { color: var(--accent); }
 body.expanded #screen, body.expanded .console-bottom { display: none; }
 body.expanded #console { border-radius: 0 0 12px 12px; padding-bottom: 6px; box-shadow: none; }
-body.expanded .brand { flex: 0 0 auto; }
-body.expanded #mini-hud { display: block; }
+
+body.expanded #mini-hud { display: flex; }
 body.expanded #handle { background: #2e3d5c; border-color: #5f8fe0; color: var(--text); }
+
+/* ---- 欄の先頭の数値 ---- */
+#panel-gold { display: flex; flex-wrap: wrap; gap: 4px 6px; padding: 2px 0 8px; }
+#panel-gold span.chip { background: #221e30; border: 1px solid #3a3450; border-radius: 6px; padding: 2px 8px; font-size: 13px; white-space: nowrap; color: var(--text); }
+#panel-gold span.chip.g { color: var(--accent); } #panel-gold span.chip.f { color: var(--frag); }
 
 /* ---- 裏技帳 ---- */
 .chap { display: flex; align-items: center; gap: 8px; padding: 10px 6px; margin-top: 6px; background: #221e30; border: 2px solid #3a3450; border-radius: 8px; cursor: pointer; }

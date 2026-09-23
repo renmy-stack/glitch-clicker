@@ -487,12 +487,12 @@ function offline() {
 function renderHud() {
   $('gold').textContent = fmt(S.gold) + ' G';
   $('hud-dps').textContent = 'DPS ' + fmt(dps()); $('hud-tap').textContent = 'タップ ' + fmt(tapDmg());
-  if (expanded) $('mini-hud').textContent = 'エリア ' + S.area + ' ' + fmt(S.gold) + 'G ⚔' + fmt(dps()) + ' 👆' + fmt(tapDmg());
+  if (expanded) { $('mh-area').textContent = 'エリア ' + S.area; $('mh-gold').textContent = fmt(S.gold) + ' G'; $('mh-dps').textContent = '⚔ ' + fmt(dps()); $('mh-tap').textContent = '👆 ' + fmt(tapDmg()); }
   $('area-name').textContent = zoneOf().name + (S.loop > 1 ? ' ' + S.loop + '周' : '');
   $('area-no').textContent = 'エリア ' + S.area;
   $('progfill').style.width = (isBossArea() ? (E ? (1 - E.hp / E.max) * 100 : 0) : S.kills / KILLS_PER_AREA * 100) + '%';
   renderHp();
-  const p = $('panel-gold'); if (p) p.innerHTML = fmt(S.gold) + ' G  <span class="frag">◆' + S.frags + '</span>  <small>DPS ' + fmt(dps()) + ' / タップ ' + fmt(tapDmg()) + (S.buff > 1 ? ' / はた ×' + S.buff.toFixed(1) : '') + (S.luck ? ' / めがね ' + S.luck : '') + '</small>';
+  const p = $('panel-gold'); if (p) p.innerHTML = '<span class="chip g">' + fmt(S.gold) + ' G</span><span class="chip f">◆ ' + S.frags + '</span><span class="chip">⚔ ' + fmt(dps()) + '</span><span class="chip">👆 ' + fmt(tapDmg()) + '</span>' + (S.buff > 1 ? '<span class="chip">🚩 ×' + S.buff.toFixed(1) + '</span>' : '') + (S.luck ? '<span class="chip">👓 ' + S.luck + '</span>' : '');
   document.querySelectorAll('.row button.buy').forEach(b => { const c = Number(b.dataset.cost); if (!isNaN(c)) b.disabled = S.gold < c; });
 }
 function renderHp() { if (!E) return; $('hpfill').style.width = Math.max(0, E.hp / E.max * 100) + '%'; $('hptext').textContent = fmt(Math.max(0, E.hp)) + ' / ' + fmt(E.max); }
@@ -540,7 +540,7 @@ document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click
 
 function renderPanel() {
   const p = $('panel');
-  let h = '<div id="panel-gold" class="note"></div>';
+  let h = '<div id="panel-gold"></div>';
   if (curTab === 'party') {
     h += '<div class="buybar">' + [1, 10, 100, 'max'].map(n => '<button class="' + (buyN === n ? 'on' : '') + '" onclick="setBuyN(\'' + n + '\')">×' + n + '</button>').join('') + '</div>';
     for (const a of ALLIES) {
