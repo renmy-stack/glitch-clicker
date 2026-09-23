@@ -95,27 +95,7 @@ const TAP_DPS_RATE = 0.01; // タップにDPSの1%を上乗せ
 // ---- 周回 ----
 const LOOP_MUL = 4; // 差し直すたびに全ダメージ ×4（2周目 ×4、3周目 ×16 …）
 
-// ---- 裏技（バグ）。hint は断片ヒント。minLoop は何周目から起きるか ----
-const BUGS = [
-  { id: 'title10',   name: 'かくれタイトル',    hint: 'なまえを 10かい よぶと',           frag: 3 },
-  { id: 'hold5',     name: 'はなさないバグ',    hint: 'てきを 5びょう はなさないで',      frag: 3 },
-  { id: 'combo',     name: 'ゆびが みえない',   hint: '2びょうで 20かい',                 frag: 3 },
-  { id: 'zero',      name: 'すっからかん',      hint: 'おかねを ぴったり 0に',            frag: 3 },
-  { id: 'thirteen',  name: 'ふきつな かず',     hint: 'なかまを ちょうど 13にんに',       frag: 4 },
-  { id: 'overflow',  name: '16ビットの かべ',   hint: '65535を こえた しゅんかん',        frag: 4 },
-  { id: 'angry',     name: 'なかまを つつくな', hint: 'なかまの えを 30かい',             frag: 3 },
-  { id: 'wall',      name: 'かべぬけ',          hint: 'ほらあなの ひだりの かべを 3かい', frag: 5, reuse: 'エリアごとに1回、かくし部屋のゴールド' },
-  { id: 'power',     name: 'でんげん ちらちら', hint: 'でんげんを 5びょうで 3かい',       frag: 4, reuse: '1時間に1回、ランダムなゴールド' },
-  { id: 'konami',    name: 'うえうえ したした', hint: 'ゲームきの ボタンで あのコマンド', frag: 6 },
-  { id: 'select',    name: 'セレクトおし',      hint: 'セレクトを おしながら A',          frag: 4 },
-  { id: 'landscape', name: 'よこむき',          hint: 'ふるいのに ゆれるのか',            frag: 3 },
-  { id: 'clock444',  name: 'よんが みっつ',     hint: 'とけいが 4:44 のとき',             frag: 5 },
-  { id: 'midnight',  name: 'よふかし',          hint: 'まよなか 0じ〜4じ',                frag: 3 },
-  { id: 'nameDebug', name: 'なまえは しょうたい', hint: 'なまえに「デバッグ」',           frag: 5 },
-  { id: 'sleep',     name: 'おやすみ',          hint: '8じかん いじょう はなれて もどる', frag: 4 },
-  { id: 'back100',   name: 'はじまりに かえる', hint: '2しゅうめ、エリア1で 100たい',     frag: 8, minLoop: 2 },
-  { id: 'loop3',     name: 'さしなおし さんかい', hint: 'カセットを 3かい さしなおす',    frag: 8, minLoop: 2 },
-];
+// ---- 裏技（バグ）は bugs.js に分離 ----
 
 // ---- 公式チート（デバッグメニュー）。エンディング後に解放、メモリ片で購入 ----
 const CHEATS = [
@@ -125,10 +105,10 @@ const CHEATS = [
   { id: 'stage',   name: 'ステージセレクト', cost: 8,  desc: '行ったことのあるエリアへ飛ぶ', type: 'button' },
   { id: 'gold',    name: 'ゴールド注入',     cost: 10, desc: '10分ぶんの稼ぎをもらう（10分に1回）', type: 'button', cooldown: 600 },
   { id: 'auto',    name: 'オートタップ',     cost: 12, desc: '勝手に 秒5回 タップする', type: 'toggle' },
-  { id: 'speed5',  name: 'そくど ×5',       cost: 15, desc: '仲間の攻撃が5倍速', type: 'toggle', speed: 5, needBugs: 3 },
-  { id: 'hp1',     name: 'てきHP=1',        cost: 30, desc: 'どんな敵も1発', type: 'toggle', needBugs: 5 },
-  { id: 'speed10', name: 'そくど ×10',      cost: 40, desc: '仲間の攻撃が10倍速', type: 'toggle', speed: 10, needBugs: 8 },
-  { id: 'edit',    name: 'セーブ改造',       cost: 50, desc: 'ゴールドとメモリ片を直接いじる', type: 'button', needBugs: 10 },
+  { id: 'speed5',  name: 'そくど ×5',       cost: 15, desc: '仲間の攻撃が5倍速', type: 'toggle', speed: 5, needBugs: 15 },
+  { id: 'hp1',     name: 'てきHP=1',        cost: 30, desc: 'どんな敵も1発', type: 'toggle', needBugs: 30 },
+  { id: 'speed10', name: 'そくど ×10',      cost: 40, desc: '仲間の攻撃が10倍速', type: 'toggle', speed: 10, needBugs: 60 },
+  { id: 'edit',    name: 'セーブ改造',       cost: 50, desc: 'ゴールドとメモリ片を直接いじる', type: 'button', needBugs: 100 },
 ];
 // 記録を汚さないチート（ONでも「正規」扱い）
 const HARMLESS_CHEATS = ['palette', 'bgm'];
@@ -147,9 +127,11 @@ const ACHIEVEMENTS = [
   { id: 'ending',   name: 'ゆうしゃの しょうめい', desc: 'チートなしで魔王を倒す', frag: 20, cond: s => s.stats.endingsClean >= 1 },
   { id: 'endingC',  name: 'かいぞうしゃ',         desc: 'チートありで魔王を倒す', frag: 5, cond: s => s.stats.endingsCheat >= 1 },
   { id: 'fast',     name: 'TAS',                  desc: '1周を10分以内でクリア（チートOK）', frag: 10, cond: s => s.stats.fastestClear > 0 && s.stats.fastestClear <= 600 },
-  { id: 'bugs5',    name: 'バグハンター',         desc: '裏技を5つ見つける', frag: 5, cond: s => Object.keys(s.bugs).length >= 5 },
-  { id: 'bugs10',   name: 'デバッガー',           desc: '裏技を10こ見つける', frag: 10, cond: s => Object.keys(s.bugs).length >= 10 },
-  { id: 'bugsAll',  name: 'すべてを しる もの',   desc: '裏技を全部見つける', frag: 30, cond: s => Object.keys(s.bugs).length >= BUGS.length },
+  { id: 'bugs10',   name: 'バグハンター',         desc: '裏技を10こ見つける', frag: 5, cond: s => Object.keys(s.bugs).length >= 10 },
+  { id: 'bugs50',   name: 'デバッガー',           desc: '裏技を50こ見つける', frag: 10, cond: s => Object.keys(s.bugs).length >= 50 },
+  { id: 'bugs100',  name: 'バグの ぬし',          desc: '裏技を100こ見つける', frag: 20, cond: s => Object.keys(s.bugs).length >= 100 },
+  { id: 'bugs200',  name: 'かいはつしゃ より くわしい', desc: '裏技を200こ見つける', frag: 40, cond: s => Object.keys(s.bugs).length >= 200 },
+  { id: 'bugsAll',  name: 'すべてを しる もの',   desc: '裏技を全部見つける', frag: 100, cond: s => Object.keys(s.bugs).length >= BUGS.length },
   { id: 'cheatsAll', name: 'かいはつしゃ',        desc: 'デバッグメニューを全部買う', frag: 30, cond: s => Object.keys(s.cheats).length >= CHEATS.length },
   { id: 'loop1',    name: 'カセット さしなおし',  desc: '1回 周回する', frag: 10, cond: s => s.loop >= 2 },
   { id: 'loop5',    name: 'ループ',               desc: '5周目に入る', frag: 30, cond: s => s.loop >= 5 },

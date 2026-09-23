@@ -60,6 +60,7 @@ h4 { margin: 12px 0 6px; font-size: 15px; color: var(--accent); border-bottom: 1
 #title { background: radial-gradient(#1a3a5c, #06101c); }
 .title-logo { font-size: 34px; line-height: 1.1; color: #ffe27a; text-shadow: 3px 3px 0 #7a3a00, -1px -1px 0 #000; text-align: center; letter-spacing: 2px; }
 .title-sub { margin-top: 18px; font-size: 15px; color: #fff; animation: blink 1s steps(1) infinite; }
+.rumor { position: absolute; bottom: 28px; left: 10px; right: 10px; font-size: 12px; color: #9fd; text-align: center; line-height: 1.4; }
 .title-copy { position: absolute; bottom: 8px; font-size: 12px; color: #8ab; }
 @keyframes blink { 50% { opacity: 0; } }
 #off { background: #050505; }
@@ -114,6 +115,18 @@ body.expanded #console { border-radius: 0 0 12px 12px; padding-bottom: 6px; box-
 body.expanded .brand { flex: 0 0 auto; }
 body.expanded #mini-hud { display: block; }
 body.expanded #handle { background: #2e3d5c; border-color: #5f8fe0; color: var(--text); }
+
+/* ---- 裏技帳 ---- */
+.chap { display: flex; align-items: center; gap: 8px; padding: 10px 6px; margin-top: 6px; background: #221e30; border: 2px solid #3a3450; border-radius: 8px; cursor: pointer; }
+.chap.open { border-color: var(--accent); }
+.chap.done { border-color: var(--ok); }
+.chap .cname { flex: 1; font-size: 16px; }
+.chap .cdesc { font-size: 12px; color: var(--muted); }
+.chap .ccount { font-size: 14px; color: var(--accent); }
+.star { color: var(--accent); font-size: 12px; letter-spacing: -1px; }
+.row.hidden .name { color: var(--muted); }
+.row button.hint { min-width: 64px; font-size: 12px; background: #2e3d5c; border-color: #5f8fe0; }
+.rumorbox { background: #1c2a3a; border: 2px solid #3a6a8a; border-radius: 8px; padding: 8px 10px; font-size: 14px; color: #bfe; margin-bottom: 6px; line-height: 1.5; }
 
 /* ---- タブ・パネル ---- */
 #tabs { display: flex; gap: 2px; padding: 4px 6px 0; flex: 0 0 auto; }

@@ -1,8 +1,8 @@
 /* オフライン対応（https で配信したときだけ登録される）
    - assets/ の画像: キャッシュ優先
    - HTML/JS/CSS: ネット優先、失敗したらキャッシュ */
-const CACHE = 'glitch-202609231750';
-const CORE = ['./', './index.html', './style.css', './data.js', './game.js', './manifest.webmanifest'];
+const CACHE = 'glitch-202609231807';
+const CORE = ['./', './index.html', './style.css', './data.js', './bugs.js', './game.js', './manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
