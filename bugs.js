@@ -176,7 +176,7 @@ const BUGS = (() => {
   add('debug', 'pal4', 'いろ いっしゅう', 'カラーパレットを いっしゅう させる', 1, 'cheat', c => c.action === 'palette' && c.cycles >= 1);
   add('debug', 'pal20', 'いろ ちかちか', 'カラーパレットを 20かい きりかえる', 2, 'cheat', c => c.action === 'palette' && c.presses >= 20);
   add('debug', 'bgm10', 'BGM ずっと', 'かくしBGM を 10ぷん ならす', 2, 'second', c => c.bgmSec >= 600);
-  add('debug', 'allon', 'ぜんぶ ON', 'そくど×10・てきHP=1・オートタップ を どうじに ON', 3, 'cheat', c => c.S.cheatOn.speed10 && c.S.cheatOn.hp1 && c.S.cheatOn.auto);
+  add('debug', 'allon', 'ぜんぶ ON', 'そくど×10・てきHP 1/10・オートタップ を どうじに ON', 3, 'cheat', c => c.S.cheatOn.speed10 && c.S.cheatOn.hp10 && c.S.cheatOn.auto);
   add('debug', 'stageall', 'ワープ めぐり', 'ステージセレクトで 6ゾーン ぜんぶに とぶ', 2, 'cheat', c => c.action === 'jump' && Object.keys(c.S.stats.jumped).length >= 6);
   add('debug', 'edit0', 'すっからかん かいぞう', 'セーブ改造で ゴールドを 0 に', 1, 'cheat', c => c.action === 'edit' && c.gold === 0);
   add('debug', 'edit65535', 'かいぞう 65535', 'セーブ改造で メモリ片を 65535 に', 3, 'cheat', c => c.action === 'edit' && c.frags === 65535);

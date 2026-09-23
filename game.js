@@ -20,8 +20,12 @@ function newState() {
 }
 let S = load();
 (function migrateCheats() {
-  if (S.v >= 2) return;
-  S.v = 2;
+  if (S.v >= 3) return;
+  if (S.v >= 2) { // v2 → v3: てきHP=1 は最終チートに移動。持っていたら「てきHP 1/10」に置き換え
+    if (S.cheats.hp1) { delete S.cheats.hp1; delete S.cheatOn.hp1; S.cheats.hp10 = 1; setTimeout(() => modal('チートの ちょうせい', '「てきHP=1」は つよすぎたので、さいごの チート（裏技300・5周目）に うつしました。<br>かわりに「てきHP 1/10」を おわたしします。'), 800); }
+    S.v = 3; return;
+  }
+  S.v = 3;
   const refunded = [];
   for (const c of CHEATS) {
     if (!S.cheats[c.id]) continue;
@@ -67,7 +71,7 @@ function maxAffordable(a) { let n = 0, have = S.allies[a.id] || 0, g = S.gold; w
 function swordCost() { return Math.floor(SWORD.cost * Math.pow(SWORD.growth, S.sword)); }
 function isBossArea(a = S.area) { return a % AREAS_PER_ZONE === 0; }
 function zoneOf(a = S.area) { return ZONES[Math.min(ZONES.length - 1, Math.floor((a - 1) / AREAS_PER_ZONE))]; }
-function curHp(boss) { return S.cheatOn.hp1 ? 1 : enemyHp(S.area, boss); }
+function curHp(boss) { if (S.cheatOn.hp1) return 1; const h = enemyHp(S.area, boss); return S.cheatOn.hp10 ? Math.max(1, Math.floor(h / 10)) : h; }
 function goldPerSec() { const hp = enemyHp(S.area, false); return dps() > 0 ? dps() / hp * enemyGold(S.area, false) : 0; }
 function bugCount() { return Object.keys(S.bugs).length; }
 
@@ -403,7 +407,7 @@ function toggleCheat(id) {
   S.stats.toggles++; bugEvent('cheat', { action: 'toggle', id, on: S.cheatOn[id] });
   if (S.cheatOn[id] && !HARMLESS_CHEATS.includes(id)) markCheated();
   if (id === 'bgm') { MUSIC.setGlitch(S.cheatOn.bgm); }
-  if (id === 'hp1' && E) { E.max = curHp(E.boss); E.hp = Math.min(E.hp, E.max); renderHp(); }
+  if ((id === 'hp1' || id === 'hp10') && E) { E.max = curHp(E.boss); E.hp = Math.min(E.hp, E.max); renderHp(); }
   renderPanel(); save();
 }
 function useCheat(id) {

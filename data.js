@@ -106,12 +106,13 @@ const CHEATS = [
   { id: 'gold',    name: 'ゴールド注入',     cost: 60,  desc: '10分ぶんの稼ぎをもらう（10分に1回）', type: 'button', cooldown: 600, needBugs: 30 },
   { id: 'auto',    name: 'オートタップ',     cost: 80,  desc: '勝手に 秒5回 タップする', type: 'toggle', needBugs: 40 },
   { id: 'speed5',  name: 'そくど ×5',       cost: 120, desc: '仲間の攻撃が5倍速', type: 'toggle', speed: 5, needBugs: 60 },
-  { id: 'hp1',     name: 'てきHP=1',        cost: 200, desc: 'どんな敵も1発', type: 'toggle', needBugs: 100 },
+  { id: 'hp10',    name: 'てきHP 1/10',     cost: 200, desc: '敵の HP が 10分の1 になる', type: 'toggle', needBugs: 100 },
   { id: 'speed10', name: 'そくど ×10',      cost: 300, desc: '仲間の攻撃が10倍速', type: 'toggle', speed: 10, needBugs: 150 },
-  { id: 'edit',    name: 'セーブ改造',       cost: 500, desc: 'ゴールドとメモリ片を直接いじる（さいごの きのう）', type: 'button', needBugs: 250, needLoop: 3 },
+  { id: 'edit',    name: 'セーブ改造',       cost: 500, desc: 'ゴールドとメモリ片を直接いじる', type: 'button', needBugs: 250, needLoop: 3 },
+  { id: 'hp1',     name: 'てきHP=1',        cost: 800, desc: 'どんな敵も1発。さいごの チート', type: 'toggle', needBugs: 300, needLoop: 5 },
 ];
 // 旧バージョン（v0.3 まで）の値段。セーブ移行の返金に使う
-const CHEATS_OLD_COST = { palette: 3, bgm: 5, speed2: 5, stage: 8, gold: 10, auto: 12, speed5: 15, hp1: 30, speed10: 40, edit: 50 };
+const CHEATS_OLD_COST = { palette: 3, bgm: 5, speed2: 5, stage: 8, gold: 10, auto: 12, speed5: 15, hp1: 30, hp10: 200, speed10: 40, edit: 50 };
 // 記録を汚さないチート（ONでも「正規」扱い）
 const HARMLESS_CHEATS = ['palette', 'bgm'];
 
